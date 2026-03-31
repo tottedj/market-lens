@@ -127,7 +127,7 @@ async function RankingContent() {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black px-4 py-8 sm:px-8">
+    <div className="min-h-screen bg-blue-50 dark:bg-blue-950 px-4 py-8 sm:px-8">
       <header className="max-w-7xl mx-auto mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
           MarketLens
