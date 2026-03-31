@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import RankingTable from "@/components/RankingTable";
-import type { RatioKey } from "@/components/RankingTable";
+import type { RatioKey } from "@/lib/types";
 
 async function getCompanyRatios() {
   const [incomeRes, balanceRes, cashFlowRes, companiesRes] = await Promise.all([
@@ -127,27 +127,17 @@ async function RankingContent() {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-blue-950 px-4 py-8 sm:px-8">
-      <header className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
-          MarketLens
-        </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Rank companies by the financial ratios that matter to you.
-        </p>
-      </header>
-      <Suspense
-        fallback={
-          <div className="max-w-7xl mx-auto">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-64" />
-              <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded" />
-            </div>
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-64" />
+            <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded" />
           </div>
-        }
-      >
-        <RankingContent />
-      </Suspense>
-    </div>
+        </div>
+      }
+    >
+      <RankingContent />
+    </Suspense>
   );
 }

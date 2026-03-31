@@ -1,86 +1,12 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-
-export type RatioKey =
-  | "roa"
-  | "roe"
-  | "gross_margin"
-  | "operating_margin"
-  | "net_margin"
-  | "ebitda_margin"
-  | "debt_to_equity"
-  | "current_ratio"
-  | "revenue_growth"
-  | "fcf_growth";
-
-type Company = {
-  id: number;
-  ticker: string;
-  name: string;
-  sector: string;
-  ratios: Record<RatioKey, number | null>;
-};
-
-const RATIO_META: Record<
-  RatioKey,
-  { label: string; higherIsBetter: boolean; format: (v: number) => string }
-> = {
-  roa: {
-    label: "ROA",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  roe: {
-    label: "ROE",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  gross_margin: {
-    label: "Gross Margin",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  operating_margin: {
-    label: "Operating Margin",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  net_margin: {
-    label: "Net Margin",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  ebitda_margin: {
-    label: "EBITDA Margin",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  debt_to_equity: {
-    label: "Debt/Equity",
-    higherIsBetter: false,
-    format: (v) => v.toFixed(2),
-  },
-  current_ratio: {
-    label: "Current Ratio",
-    higherIsBetter: true,
-    format: (v) => v.toFixed(2),
-  },
-  revenue_growth: {
-    label: "Revenue Growth",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-  fcf_growth: {
-    label: "FCF Growth",
-    higherIsBetter: true,
-    format: (v) => (v * 100).toFixed(1) + "%",
-  },
-};
-
-const DEFAULT_RATIOS: RatioKey[] = ["roa", "fcf_growth", "revenue_growth"];
+import { useRouter } from "@/i18n/navigation";
+import type { RatioKey, Company } from "@/lib/types";
+import { RATIO_META, DEFAULT_RATIOS } from "@/lib/types";
 
 export default function RankingTable({ companies }: { companies: Company[] }) {
+  const router = useRouter();
   const [selectedRatios, setSelectedRatios] =
     useState<RatioKey[]>(DEFAULT_RATIOS);
   const [showPicker, setShowPicker] = useState(false);
@@ -246,7 +172,8 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
             {ranked.map((company) => (
               <tr
                 key={company.id}
-                className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
+                onClick={() => router.push(`/company-details?company=${company.ticker}`)}
+                className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer"
               >
                 <td className="px-4 py-3 font-mono text-zinc-400 dark:text-zinc-500">
                   {company.rank}
