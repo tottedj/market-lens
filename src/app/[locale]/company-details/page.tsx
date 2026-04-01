@@ -53,7 +53,6 @@ async function getCompanyYearlyData(): Promise<{
 
   const allYears = new Set<number>();
 
-  // Group rows by company, sorted by fiscal_year ascending
   type IncomeRow = (typeof incomeRes.data)[number];
   type BalanceRow = (typeof balanceRes.data)[number];
   type CashFlowRow = (typeof cashFlowRes.data)[number];
@@ -62,7 +61,21 @@ async function getCompanyYearlyData(): Promise<{
     return new Date(String(fiscalYear)).getFullYear();
   }
 
-  function groupByCompany<T extends { company_id: number; fiscal_year: string | number }>(
+  // Maps keyed by "companyId_year" for correct year alignment across tables
+  function groupByCompanyYear<T extends { company_id: number; fiscal_year: string | number }>(
+    rows: T[]
+  ): Map<string, T> {
+    const map = new Map<string, T>();
+    for (const row of rows) {
+      const year = extractYear(row.fiscal_year);
+      map.set(`${row.company_id}_${year}`, row);
+      allYears.add(year);
+    }
+    return map;
+  }
+
+  // Per-company arrays sorted by fiscal_year for previous-year growth lookups
+  function groupByCompany<T extends { company_id: number }>(
     rows: T[]
   ): Map<number, T[]> {
     const map = new Map<number, T[]>();
@@ -70,37 +83,64 @@ async function getCompanyYearlyData(): Promise<{
       const arr = map.get(row.company_id) || [];
       arr.push(row);
       map.set(row.company_id, arr);
-      allYears.add(extractYear(row.fiscal_year));
     }
     return map;
   }
 
+  const incomeMap = groupByCompanyYear<IncomeRow>(incomeRes.data);
+  const balanceMap = groupByCompanyYear<BalanceRow>(balanceRes.data);
+  const cashFlowMap = groupByCompanyYear<CashFlowRow>(cashFlowRes.data);
+
+  // Arrays for safe previous-row growth lookups
   const incomeByCompany = groupByCompany<IncomeRow>(incomeRes.data);
-  const balanceByCompany = groupByCompany<BalanceRow>(balanceRes.data);
   const cashFlowByCompany = groupByCompany<CashFlowRow>(cashFlowRes.data);
 
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+
+  function safeGrowth(
+    current: number | null,
+    previous: number | null
+  ): number | null {
+    if (current === null || previous === null || previous === 0) return null;
+    return (current - previous) / Math.abs(previous);
+  }
 
   const companies: CompanyYearlyData[] = companiesRes.data.map((company) => {
     const years: Record<number, Record<RatioKey, number | null>> = {};
     const fiscalDates: Record<number, string> = {};
 
+    // Build index maps for previous-row lookups within each company's arrays
     const incomeRows = incomeByCompany.get(company.id) || [];
-    const balanceRows = balanceByCompany.get(company.id) || [];
     const cashFlowRows = cashFlowByCompany.get(company.id) || [];
+    const incomeByYear = new Map<number, { row: IncomeRow; prev?: IncomeRow }>();
+    for (let i = 0; i < incomeRows.length; i++) {
+      const year = extractYear(incomeRows[i].fiscal_year);
+      incomeByYear.set(year, {
+        row: incomeRows[i],
+        prev: i > 0 ? incomeRows[i - 1] : undefined,
+      });
+    }
+    const cashFlowByYear = new Map<number, { row: CashFlowRow; prev?: CashFlowRow }>();
+    for (let i = 0; i < cashFlowRows.length; i++) {
+      const year = extractYear(cashFlowRows[i].fiscal_year);
+      cashFlowByYear.set(year, {
+        row: cashFlowRows[i],
+        prev: i > 0 ? cashFlowRows[i - 1] : undefined,
+      });
+    }
 
-    for (let i = 0; i < incomeRows.length || i < balanceRows.length || i < cashFlowRows.length; i++) {
-      const income = incomeRows[i];
-      const balance = balanceRows[i];
-      const cashFlow = cashFlowRows[i];
-      const prevIncome = i > 0 ? incomeRows[i - 1] : undefined;
-      const prevCashFlow = i > 0 ? cashFlowRows[i - 1] : undefined;
+    for (const year of sortedYears) {
+      const key = `${company.id}_${year}`;
+      const income = incomeMap.get(key);
+      const balance = balanceMap.get(key);
+      const cashFlow = cashFlowMap.get(key);
+
+      if (!income && !balance && !cashFlow) continue;
 
       const rawDate = String(
         income?.fiscal_year ?? balance?.fiscal_year ?? cashFlow?.fiscal_year
       );
-      const year = extractYear(rawDate);
-      fiscalDates[year] = rawDate.slice(0, 10); // "2024-09-30"
+      fiscalDates[year] = rawDate.slice(0, 10);
 
       const netIncome = num(income?.net_income);
       const totalAssets = num(balance?.total_assets);
@@ -113,8 +153,8 @@ async function getCompanyYearlyData(): Promise<{
       const currentAssets = num(balance?.current_assets);
       const currentLiabilities = num(balance?.current_liabilities);
       const fcf = num(cashFlow?.free_cash_flow);
-      const prevFcf = num(prevCashFlow?.free_cash_flow);
-      const prevRevenue = num(prevIncome?.total_revenue);
+      const prevRevenue = num(incomeByYear.get(year)?.prev?.total_revenue);
+      const prevFcf = num(cashFlowByYear.get(year)?.prev?.free_cash_flow);
 
       years[year] = {
         roa: safeDivide(netIncome, totalAssets),
@@ -125,14 +165,8 @@ async function getCompanyYearlyData(): Promise<{
         ebitda_margin: safeDivide(ebitda, totalRevenue),
         debt_to_equity: safeDivide(totalDebt, equity),
         current_ratio: safeDivide(currentAssets, currentLiabilities),
-        revenue_growth:
-          prevRevenue !== null && prevRevenue !== 0 && totalRevenue !== null
-            ? (totalRevenue - prevRevenue) / Math.abs(prevRevenue)
-            : null,
-        fcf_growth:
-          prevFcf !== null && prevFcf !== 0 && fcf !== null
-            ? (fcf - prevFcf) / Math.abs(prevFcf)
-            : null,
+        revenue_growth: safeGrowth(totalRevenue, prevRevenue),
+        fcf_growth: safeGrowth(fcf, prevFcf),
       };
     }
 
