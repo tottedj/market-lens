@@ -348,12 +348,10 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     type="number"
                     domain={["dataMin", "dataMax"]}
                     scale="time"
+                    ticks={filteredYears.map((y) => new Date(`${y}-01-01`).getTime())}
                     tick={{ fontSize: 12, fill: "#9ca3af" }}
                     tickLine={false}
-                    tickFormatter={(ts: number) => {
-                      const d = new Date(ts);
-                      return `${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`;
-                    }}
+                    tickFormatter={(ts: number) => String(new Date(ts).getFullYear())}
                   />
                   <YAxis
                     tick={{ fontSize: 12, fill: "#9ca3af" }}
