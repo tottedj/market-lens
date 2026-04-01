@@ -24,6 +24,7 @@ export type CompanyYearlyData = {
   name: string;
   sector: string;
   years: Record<number, Record<RatioKey, number | null>>;
+  fiscalDates: Record<number, string>; // year -> actual fiscal date e.g. "2024-09-30"
 };
 
 export const RATIO_META: Record<

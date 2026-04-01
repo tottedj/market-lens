@@ -121,13 +121,31 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
     setSelectedRatios((prev) => prev.filter((r) => r !== key));
   }
 
-  // Build chart data per ratio
+  // Build chart data per ratio using actual fiscal dates as timestamps
   const charts = useMemo(() => {
     return selectedRatios.map((ratioKey) => {
-      const data = filteredYears.map((year) => {
-        const point: Record<string, number | string | null> = { year };
+      // Collect all unique timestamps across selected companies for filtered years
+      const dateSet = new Set<string>();
+      for (const company of selectedCompanies) {
+        for (const year of filteredYears) {
+          const date = company.fiscalDates[year];
+          if (date) dateSet.add(date);
+        }
+      }
+      const sortedDates = Array.from(dateSet).sort();
+
+      const data = sortedDates.map((date) => {
+        const timestamp = new Date(date).getTime();
+        const point: Record<string, number | string | null> = { date, timestamp };
         for (const company of selectedCompanies) {
-          point[company.ticker] = company.years[year]?.[ratioKey] ?? null;
+          // Find the year that corresponds to this date for this company
+          const year = Object.entries(company.fiscalDates).find(
+            ([, d]) => d === date
+          )?.[0];
+          if (year) {
+            point[company.ticker] =
+              company.years[Number(year)]?.[ratioKey] ?? null;
+          }
         }
         return point;
       });
@@ -326,10 +344,16 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     opacity={0.3}
                   />
                   <XAxis
-                    dataKey="year"
-                    type="category"
+                    dataKey="timestamp"
+                    type="number"
+                    domain={["dataMin", "dataMax"]}
+                    scale="time"
                     tick={{ fontSize: 12, fill: "#9ca3af" }}
                     tickLine={false}
+                    tickFormatter={(ts: number) => {
+                      const d = new Date(ts);
+                      return `${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`;
+                    }}
                   />
                   <YAxis
                     tick={{ fontSize: 12, fill: "#9ca3af" }}
@@ -348,6 +372,14 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                       fontSize: "13px",
                     }}
                     labelStyle={{ color: "#a1a1aa" }}
+                    labelFormatter={(ts) => {
+                      const d = new Date(Number(ts));
+                      return d.toLocaleDateString("en", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      });
+                    }}
                     formatter={(value) => {
                       if (value == null || typeof value !== "number")
                         return ["N/A", ""];

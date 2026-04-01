@@ -53,41 +53,54 @@ async function getCompanyYearlyData(): Promise<{
 
   const allYears = new Set<number>();
 
-  // Group by company and year
+  // Group rows by company, sorted by fiscal_year ascending
   type IncomeRow = (typeof incomeRes.data)[number];
   type BalanceRow = (typeof balanceRes.data)[number];
   type CashFlowRow = (typeof cashFlowRes.data)[number];
 
-  function groupByCompanyYear<T extends { company_id: number; fiscal_year: number }>(
+  function extractYear(fiscalYear: string | number): number {
+    return new Date(String(fiscalYear)).getFullYear();
+  }
+
+  function groupByCompany<T extends { company_id: number; fiscal_year: string | number }>(
     rows: T[]
-  ): Map<string, T> {
-    const map = new Map<string, T>();
+  ): Map<number, T[]> {
+    const map = new Map<number, T[]>();
     for (const row of rows) {
-      map.set(`${row.company_id}_${row.fiscal_year}`, row);
-      allYears.add(row.fiscal_year);
+      const arr = map.get(row.company_id) || [];
+      arr.push(row);
+      map.set(row.company_id, arr);
+      allYears.add(extractYear(row.fiscal_year));
     }
     return map;
   }
 
-  const incomeMap = groupByCompanyYear<IncomeRow>(incomeRes.data);
-  const balanceMap = groupByCompanyYear<BalanceRow>(balanceRes.data);
-  const cashFlowMap = groupByCompanyYear<CashFlowRow>(cashFlowRes.data);
+  const incomeByCompany = groupByCompany<IncomeRow>(incomeRes.data);
+  const balanceByCompany = groupByCompany<BalanceRow>(balanceRes.data);
+  const cashFlowByCompany = groupByCompany<CashFlowRow>(cashFlowRes.data);
 
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
 
   const companies: CompanyYearlyData[] = companiesRes.data.map((company) => {
     const years: Record<number, Record<RatioKey, number | null>> = {};
+    const fiscalDates: Record<number, string> = {};
 
-    for (const year of sortedYears) {
-      const key = `${company.id}_${year}`;
-      const income = incomeMap.get(key);
-      const balance = balanceMap.get(key);
-      const cashFlow = cashFlowMap.get(key);
-      const prevKey = `${company.id}_${year - 1}`;
-      const prevIncome = incomeMap.get(prevKey);
-      const prevCashFlow = cashFlowMap.get(prevKey);
+    const incomeRows = incomeByCompany.get(company.id) || [];
+    const balanceRows = balanceByCompany.get(company.id) || [];
+    const cashFlowRows = cashFlowByCompany.get(company.id) || [];
 
-      if (!income && !balance && !cashFlow) continue;
+    for (let i = 0; i < incomeRows.length || i < balanceRows.length || i < cashFlowRows.length; i++) {
+      const income = incomeRows[i];
+      const balance = balanceRows[i];
+      const cashFlow = cashFlowRows[i];
+      const prevIncome = i > 0 ? incomeRows[i - 1] : undefined;
+      const prevCashFlow = i > 0 ? cashFlowRows[i - 1] : undefined;
+
+      const rawDate = String(
+        income?.fiscal_year ?? balance?.fiscal_year ?? cashFlow?.fiscal_year
+      );
+      const year = extractYear(rawDate);
+      fiscalDates[year] = rawDate.slice(0, 10); // "2024-09-30"
 
       const netIncome = num(income?.net_income);
       const totalAssets = num(balance?.total_assets);
@@ -129,6 +142,7 @@ async function getCompanyYearlyData(): Promise<{
       name: company.name,
       sector: company.sector,
       years,
+      fiscalDates,
     };
   });
 
