@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useSearchParams } from "next/navigation";
 import type { RatioKey, Company } from "@/lib/types";
 import { RATIO_META, DEFAULT_RATIOS } from "@/lib/types";
 
@@ -10,7 +9,6 @@ const MAX_COMPANIES = 4;
 
 export default function RankingTable({ companies }: { companies: Company[] }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [selectedRatios, setSelectedRatios] =
     useState<RatioKey[]>(DEFAULT_RATIOS);
   const [showPicker, setShowPicker] = useState(false);
@@ -177,8 +175,8 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
               <tr
                 key={company.id}
                 onClick={() => {
-                  const existing = searchParams.get("companies");
-                  let tickers = existing ? existing.split(",").map((t) => t.trim()) : [];
+                  const stored = localStorage.getItem("selectedCompanies") || "";
+                  let tickers = stored ? stored.split(",").map((t) => t.trim()) : [];
                   if (!tickers.some((t) => t.toLowerCase() === company.ticker.toLowerCase())) {
                     if (tickers.length >= MAX_COMPANIES) {
                       tickers = [...tickers.slice(1), company.ticker];
@@ -186,6 +184,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
                       tickers = [...tickers, company.ticker];
                     }
                   }
+                  localStorage.setItem("selectedCompanies", tickers.join(","));
                   router.push(`/company-details?companies=${tickers.join(",")}`);
                 }}
                 className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer"

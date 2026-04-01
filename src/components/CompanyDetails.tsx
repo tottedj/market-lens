@@ -29,7 +29,10 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   const pathname = usePathname();
 
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>(() => {
-    const param = searchParams.get("companies");
+    const param =
+      searchParams.get("companies") ||
+      localStorage.getItem("selectedCompanies") ||
+      "";
     if (!param) return [];
     const tickers = param.split(",").map((t) => t.trim().toLowerCase());
     return tickers
@@ -56,8 +59,8 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   const companyPickerRef = useRef<HTMLDivElement>(null);
   const ratioPickerRef = useRef<HTMLDivElement>(null);
 
-  // Sync selected companies to URL
-  const syncUrl = useCallback(
+  // Sync selected companies to URL and localStorage
+  const syncSelection = useCallback(
     (ids: number[]) => {
       const tickers = ids
         .map((id) => companies.find((c) => c.id === id)?.ticker)
@@ -69,6 +72,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
         params.delete("companies");
       }
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      localStorage.setItem("selectedCompanies", tickers.join(","));
     },
     [companies, searchParams, router, pathname]
   );
@@ -123,7 +127,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
     if (selectedCompanyIds.length >= MAX_COMPANIES) return;
     const next = [...selectedCompanyIds, id];
     setSelectedCompanyIds(next);
-    syncUrl(next);
+    syncSelection(next);
     setShowCompanyPicker(false);
     setCompanySearch("");
   }
@@ -131,7 +135,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   function removeCompany(id: number) {
     const next = selectedCompanyIds.filter((cid) => cid !== id);
     setSelectedCompanyIds(next);
-    syncUrl(next);
+    syncSelection(next);
   }
 
   function addRatio(key: RatioKey) {
