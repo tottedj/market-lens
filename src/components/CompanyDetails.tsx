@@ -15,12 +15,6 @@ import {
 import type { RatioKey, CompanyYearlyData } from "@/lib/types";
 import { RATIO_META, ALL_RATIO_KEYS, DEFAULT_RATIOS } from "@/lib/types";
 
-/** Parse a "YYYY-MM-DD" string as local time (not UTC) */
-function localDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
 const COMPANY_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b"];
 const MAX_COMPANIES = 4;
 
@@ -141,7 +135,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       const sortedDates = Array.from(dateSet).sort();
 
       const data = sortedDates.map((date) => {
-        const d = localDate(date);
+        const d = new Date(date);
         // Snap to 1st of the month for chart position; keep exact date for tooltip
         const timestamp = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
         const point: Record<string, number | string | null> = { date, timestamp };
@@ -410,7 +404,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     labelFormatter={(_ts, payload) => {
                       const exactDate = payload?.[0]?.payload?.date as string | undefined;
                       if (!exactDate) return "";
-                      const d = localDate(exactDate);
+                      const d = new Date(exactDate);
                       return d.toLocaleDateString("en", {
                         year: "numeric",
                         month: "long",
