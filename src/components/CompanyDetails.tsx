@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   LineChart,
   Line,
@@ -25,16 +25,17 @@ type Props = {
 
 export default function CompanyDetails({ companies, availableYears }: Props) {
   const searchParams = useSearchParams();
-  const preselectedTicker = searchParams.get("company");
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>(() => {
-    if (preselectedTicker) {
-      const found = companies.find(
-        (c) => c.ticker.toLowerCase() === preselectedTicker.toLowerCase()
-      );
-      return found ? [found.id] : [];
-    }
-    return [];
+    const param = searchParams.get("companies");
+    if (!param) return [];
+    const tickers = param.split(",").map((t) => t.trim().toLowerCase());
+    return tickers
+      .map((t) => companies.find((c) => c.ticker.toLowerCase() === t)?.id)
+      .filter((id): id is number => id !== undefined)
+      .slice(0, MAX_COMPANIES);
   });
 
   const [selectedRatios, setSelectedRatios] =
@@ -54,6 +55,23 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   const [showRatioPicker, setShowRatioPicker] = useState(false);
   const companyPickerRef = useRef<HTMLDivElement>(null);
   const ratioPickerRef = useRef<HTMLDivElement>(null);
+
+  // Sync selected companies to URL
+  const syncUrl = useCallback(
+    (ids: number[]) => {
+      const tickers = ids
+        .map((id) => companies.find((c) => c.id === id)?.ticker)
+        .filter(Boolean);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tickers.length > 0) {
+        params.set("companies", tickers.join(","));
+      } else {
+        params.delete("companies");
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [companies, searchParams, router, pathname]
+  );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -103,13 +121,17 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
 
   function addCompany(id: number) {
     if (selectedCompanyIds.length >= MAX_COMPANIES) return;
-    setSelectedCompanyIds((prev) => [...prev, id]);
+    const next = [...selectedCompanyIds, id];
+    setSelectedCompanyIds(next);
+    syncUrl(next);
     setShowCompanyPicker(false);
     setCompanySearch("");
   }
 
   function removeCompany(id: number) {
-    setSelectedCompanyIds((prev) => prev.filter((cid) => cid !== id));
+    const next = selectedCompanyIds.filter((cid) => cid !== id);
+    setSelectedCompanyIds(next);
+    syncUrl(next);
   }
 
   function addRatio(key: RatioKey) {
