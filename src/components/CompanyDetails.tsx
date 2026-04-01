@@ -7,13 +7,19 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import type { RatioKey, CompanyYearlyData } from "@/lib/types";
 import { RATIO_META, ALL_RATIO_KEYS, DEFAULT_RATIOS } from "@/lib/types";
+
+/** Parse a "YYYY-MM-DD" string as local time (not UTC) */
+function localDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
 
 const COMPANY_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b"];
 const MAX_COMPANIES = 4;
@@ -135,7 +141,9 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       const sortedDates = Array.from(dateSet).sort();
 
       const data = sortedDates.map((date) => {
-        const timestamp = new Date(date).getTime();
+        const d = localDate(date);
+        // Snap to 1st of the month for chart position; keep exact date for tooltip
+        const timestamp = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
         const point: Record<string, number | string | null> = { date, timestamp };
         for (const company of selectedCompanies) {
           // Find the year that corresponds to this date for this company
@@ -152,6 +160,22 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       return { ratioKey, data };
     });
   }, [selectedRatios, filteredYears, selectedCompanies]);
+
+  // Generate year and month gridline timestamps
+  const { yearLines, monthLines } = useMemo(() => {
+    if (filteredYears.length === 0) return { yearLines: [], monthLines: [] };
+    const minYear = filteredYears[0];
+    const maxYear = filteredYears[filteredYears.length - 1];
+    const years: number[] = [];
+    const months: number[] = [];
+    for (let y = minYear; y <= maxYear + 1; y++) {
+      years.push(new Date(y, 0, 1).getTime());
+      for (let m = 1; m < 12; m++) {
+        months.push(new Date(y, m, 1).getTime());
+      }
+    }
+    return { yearLines: years, monthLines: months };
+  }, [filteredYears]);
 
   const isPercentRatio = (key: RatioKey) =>
     RATIO_META[key].format(0.5).includes("%");
@@ -338,17 +362,30 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
               </h3>
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={data}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#374151"
-                    opacity={0.3}
-                  />
+                  {monthLines.map((ts) => (
+                    <ReferenceLine
+                      key={`m-${ts}`}
+                      x={ts}
+                      stroke="#374151"
+                      strokeOpacity={0.15}
+                      strokeWidth={0.5}
+                    />
+                  ))}
+                  {yearLines.map((ts) => (
+                    <ReferenceLine
+                      key={`y-${ts}`}
+                      x={ts}
+                      stroke="#374151"
+                      strokeOpacity={0.4}
+                      strokeWidth={1}
+                    />
+                  ))}
                   <XAxis
                     dataKey="timestamp"
                     type="number"
                     domain={["dataMin", "dataMax"]}
                     scale="time"
-                    ticks={filteredYears.map((y) => new Date(`${y}-01-01`).getTime())}
+                    ticks={filteredYears.map((y) => new Date(y, 0, 1).getTime())}
                     tick={{ fontSize: 12, fill: "#9ca3af" }}
                     tickLine={false}
                     tickFormatter={(ts: number) => String(new Date(ts).getFullYear())}
@@ -370,8 +407,10 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                       fontSize: "13px",
                     }}
                     labelStyle={{ color: "#a1a1aa" }}
-                    labelFormatter={(ts) => {
-                      const d = new Date(Number(ts));
+                    labelFormatter={(_ts, payload) => {
+                      const exactDate = payload?.[0]?.payload?.date as string | undefined;
+                      if (!exactDate) return "";
+                      const d = localDate(exactDate);
                       return d.toLocaleDateString("en", {
                         year: "numeric",
                         month: "long",
