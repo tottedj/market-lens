@@ -40,6 +40,7 @@ yarn-error.log*
 .vscode/
 .mcp.json
 .claude/
+PROMPTS.md
 
 # typescript
 *.tsbuildinfo
