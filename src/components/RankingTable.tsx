@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import type { RatioKey, Company } from "@/lib/types";
 import { RATIO_META, DEFAULT_RATIOS } from "@/lib/types";
@@ -9,6 +10,7 @@ const MAX_COMPANIES = 4;
 
 export default function RankingTable({ companies }: { companies: Company[] }) {
   const router = useRouter();
+  const t = useTranslations("Ranking");
   const [selectedRatios, setSelectedRatios] =
     useState<RatioKey[]>(DEFAULT_RATIOS);
   const [showPicker, setShowPicker] = useState(false);
@@ -96,7 +98,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
       {/* Ratio pills */}
       <div className="mb-6">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-          Ranking by
+          {t("rankingBy")}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {selectedRatios.map((key) => (
@@ -108,7 +110,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
               <button
                 onClick={() => removeRatio(key)}
                 className="ml-0.5 hover:text-red-300 dark:hover:text-red-600 transition-colors"
-                aria-label={`Remove ${RATIO_META[key].label}`}
+                aria-label={t("removeRatio", { label: RATIO_META[key].label })}
               >
                 &times;
               </button>
@@ -121,7 +123,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
               onClick={() => setShowPicker(!showPicker)}
               disabled={availableRatios.length === 0}
               className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 hover:border-zinc-500 hover:text-zinc-600 dark:hover:border-zinc-400 dark:hover:text-zinc-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Add ratio"
+              aria-label={t("addRatio")}
             >
               +
             </button>
@@ -152,10 +154,10 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
                 #
               </th>
               <th className="text-left px-4 py-3 font-semibold text-zinc-600 dark:text-zinc-300">
-                Company
+                {t("company")}
               </th>
               <th className="text-left px-4 py-3 font-semibold text-zinc-600 dark:text-zinc-300">
-                Sector
+                {t("sector")}
               </th>
               {selectedRatios.map((key) => (
                 <th
@@ -166,7 +168,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
                 </th>
               ))}
               <th className="text-right px-4 py-3 font-semibold text-zinc-600 dark:text-zinc-300">
-                Avg Rank
+                {t("avgRank")}
               </th>
             </tr>
           </thead>
@@ -227,7 +229,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
                         </span>
                       ) : (
                         <span className="text-zinc-300 dark:text-zinc-600">
-                          N/A
+                          {t("na")}
                         </span>
                       )}
                     </td>

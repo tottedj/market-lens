@@ -1,18 +1,20 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-
-const NAV_ITEMS = [
-  { href: "/", label: "Company Ranking" },
-  { href: "/company-details", label: "Company Details" },
-] as const;
 
 export default function Navigation() {
   const pathname = usePathname();
+  const t = useTranslations("Nav");
+
+  const navItems = [
+    { href: "/", label: t("ranking") },
+    { href: "/company-details", label: t("details") },
+  ] as const;
 
   return (
     <nav className="flex gap-2">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const isActive =
           item.href === "/"
             ? pathname === "/"

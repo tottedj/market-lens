@@ -1,6 +1,38 @@
 {
-  "HomePage": {
-    "tagline": "Rastrea, compara y clasifica empresas con datos financieros reales.",
-    "switchLanguage": "Cambiar idioma"
+  "App": {
+    "title": "MarketLens",
+    "tagline": "Rastrea, compara y clasifica empresas con datos financieros reales."
+  },
+  "Nav": {
+    "ranking": "Clasificación",
+    "details": "Detalles de empresa"
+  },
+  "Ranking": {
+    "rankingBy": "Clasificado por",
+    "company": "Empresa",
+    "sector": "Sector",
+    "avgRank": "Rango prom.",
+    "na": "N/D",
+    "addRatio": "Agregar ratio",
+    "removeRatio": "Eliminar {label}"
+  },
+  "Details": {
+    "companiesHeading": "Empresas (hasta {max})",
+    "ratios": "Ratios",
+    "yearRange": "Rango de años",
+    "to": "a",
+    "searchPlaceholder": "Buscar ticker o nombre...",
+    "noCompaniesFound": "No se encontraron empresas",
+    "selectPrompt": "Selecciona una empresa para comenzar",
+    "compareHint": "Puedes comparar hasta {max} empresas lado a lado",
+    "addCompany": "Agregar empresa",
+    "addRatio": "Agregar ratio",
+    "removeCompany": "Eliminar {ticker}",
+    "removeRatio": "Eliminar {label}"
+  },
+  "Disclaimer": {
+    "title": "Aviso legal",
+    "body": "Esta aplicación es solo para <strong>fines educativos y de demostración</strong>. Los datos financieros provienen de Yahoo Finance a través de la biblioteca yfinance y pueden ser inexactos, retrasados o incompletos. Nada en este sitio constituye asesoramiento financiero. No tome decisiones de inversión basándose en estos datos.",
+    "accept": "Entendido"
   }
 }
