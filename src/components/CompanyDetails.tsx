@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import {
   LineChart,
   Line,
@@ -27,6 +29,8 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations("Details");
 
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>(() => {
     const param =
@@ -205,7 +209,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       {/* Company selection */}
       <div className="mb-6">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-          Companies (up to {MAX_COMPANIES})
+          {t("companiesHeading", { max: MAX_COMPANIES })}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {selectedCompanies.map((company, i) => (
@@ -218,7 +222,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
               <button
                 onClick={() => removeCompany(company.id)}
                 className="ml-0.5 hover:opacity-70 transition-opacity"
-                aria-label={`Remove ${company.ticker}`}
+                aria-label={t("removeCompany", { ticker: company.ticker })}
               >
                 &times;
               </button>
@@ -230,7 +234,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
               <button
                 onClick={() => setShowCompanyPicker(!showCompanyPicker)}
                 className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 hover:border-zinc-500 hover:text-zinc-600 dark:hover:border-zinc-400 dark:hover:text-zinc-300 transition-colors"
-                aria-label="Add company"
+                aria-label={t("addCompany")}
               >
                 +
               </button>
@@ -242,7 +246,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                       type="text"
                       value={companySearch}
                       onChange={(e) => setCompanySearch(e.target.value)}
-                      placeholder="Search ticker or name..."
+                      placeholder={t("searchPlaceholder")}
                       className="w-full px-3 py-1.5 text-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       autoFocus
                     />
@@ -262,7 +266,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     ))}
                     {filteredCompanies.length === 0 && (
                       <div className="px-4 py-2 text-sm text-zinc-400">
-                        No companies found
+                        {t("noCompaniesFound")}
                       </div>
                     )}
                   </div>
@@ -276,7 +280,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       {/* Ratio selection */}
       <div className="mb-6">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-          Ratios
+          {t("ratios")}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {selectedRatios.map((key) => (
@@ -288,7 +292,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
               <button
                 onClick={() => removeRatio(key)}
                 className="ml-0.5 hover:text-red-300 dark:hover:text-red-600 transition-colors"
-                aria-label={`Remove ${RATIO_META[key].label}`}
+                aria-label={t("removeRatio", { label: RATIO_META[key].label })}
               >
                 &times;
               </button>
@@ -300,7 +304,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
               onClick={() => setShowRatioPicker(!showRatioPicker)}
               disabled={availableRatios.length === 0}
               className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 hover:border-zinc-500 hover:text-zinc-600 dark:hover:border-zinc-400 dark:hover:text-zinc-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Add ratio"
+              aria-label={t("addRatio")}
             >
               +
             </button>
@@ -325,7 +329,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       {/* Year range */}
       {availableYears.length > 0 && <div className="mb-8">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-          Year range
+          {t("yearRange")}
         </h2>
         <div className="flex items-center gap-3">
           <select
@@ -343,7 +347,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                 </option>
               ))}
           </select>
-          <span className="text-zinc-400">to</span>
+          <span className="text-zinc-400">{t("to")}</span>
           <select
             value={yearRange[1]}
             onChange={(e) =>
@@ -365,9 +369,9 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
       {/* Charts */}
       {selectedCompanies.length === 0 ? (
         <div className="text-center py-16 text-zinc-400 dark:text-zinc-500">
-          <p className="text-lg">Select a company to get started</p>
+          <p className="text-lg">{t("selectPrompt")}</p>
           <p className="text-sm mt-1">
-            You can compare up to {MAX_COMPANIES} companies side by side
+            {t("compareHint", { max: MAX_COMPANIES })}
           </p>
         </div>
       ) : (
@@ -431,7 +435,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                       const exactDate = payload?.[0]?.payload?.date as string | undefined;
                       if (!exactDate) return "";
                       const d = new Date(exactDate);
-                      return d.toLocaleDateString("en", {
+                      return d.toLocaleDateString(locale, {
                         year: "numeric",
                         month: "long",
                         day: "numeric",

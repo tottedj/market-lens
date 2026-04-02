@@ -1,6 +1,38 @@
 {
-  "HomePage": {
-    "tagline": "Suivez, comparez et classez les entreprises avec des données financières réelles.",
-    "switchLanguage": "Changer de langue"
+  "App": {
+    "title": "MarketLens",
+    "tagline": "Suivez, comparez et classez les entreprises avec des données financières réelles."
+  },
+  "Nav": {
+    "ranking": "Classement",
+    "details": "Détails entreprise"
+  },
+  "Ranking": {
+    "rankingBy": "Classé par",
+    "company": "Entreprise",
+    "sector": "Secteur",
+    "avgRank": "Rang moy.",
+    "na": "N/D",
+    "addRatio": "Ajouter un ratio",
+    "removeRatio": "Supprimer {label}"
+  },
+  "Details": {
+    "companiesHeading": "Entreprises (jusqu'à {max})",
+    "ratios": "Ratios",
+    "yearRange": "Période",
+    "to": "à",
+    "searchPlaceholder": "Rechercher ticker ou nom...",
+    "noCompaniesFound": "Aucune entreprise trouvée",
+    "selectPrompt": "Sélectionnez une entreprise pour commencer",
+    "compareHint": "Vous pouvez comparer jusqu'à {max} entreprises côte à côte",
+    "addCompany": "Ajouter une entreprise",
+    "addRatio": "Ajouter un ratio",
+    "removeCompany": "Supprimer {ticker}",
+    "removeRatio": "Supprimer {label}"
+  },
+  "Disclaimer": {
+    "title": "Avertissement",
+    "body": "Cette application est uniquement à <strong>des fins éducatives et de démonstration</strong>. Les données financières proviennent de Yahoo Finance via la bibliothèque yfinance et peuvent être inexactes, retardées ou incomplètes. Rien sur ce site ne constitue un conseil financier. Ne prenez pas de décisions d'investissement sur la base de ces données.",
+    "accept": "J'ai compris"
   }
 }
