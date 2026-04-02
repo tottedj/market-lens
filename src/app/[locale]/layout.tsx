@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import Navigation from "@/components/Navigation";
+import DisclaimerModal from "@/components/DisclaimerModal";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
+          <DisclaimerModal />
           <div className="min-h-screen bg-blue-50 dark:bg-blue-950 px-4 py-8 sm:px-8">
             <header className="max-w-7xl mx-auto mb-8">
               <div className="flex items-center justify-between mb-4">
