@@ -1,27 +1,15 @@
 import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { num, safeDivide, safeGrowth, groupByCompany } from "@/lib/utils";
 import CompanyDetails from "@/components/CompanyDetails";
 import type { RatioKey, CompanyYearlyData } from "@/lib/types";
 
-function num(val: unknown): number | null {
-  if (val === null || val === undefined) return null;
-  const n = Number(val);
-  return isFinite(n) ? n : null;
-}
-
-function safeDivide(
-  numerator: number | null,
-  denominator: number | null
-): number | null {
-  if (numerator === null || denominator === null || denominator === 0)
-    return null;
-  return numerator / denominator;
-}
-
-async function getCompanyYearlyData(): Promise<{
+const getCompanyYearlyData = unstable_cache(async (): Promise<{
   companies: CompanyYearlyData[];
   availableYears: number[];
-}> {
+}> => {
+
   const [incomeRes, balanceRes, cashFlowRes, companiesRes] = await Promise.all([
     supabase
       .from("income_statement_annual")
@@ -74,19 +62,6 @@ async function getCompanyYearlyData(): Promise<{
     return map;
   }
 
-  // Per-company arrays sorted by fiscal_year for previous-year growth lookups
-  function groupByCompany<T extends { company_id: number }>(
-    rows: T[]
-  ): Map<number, T[]> {
-    const map = new Map<number, T[]>();
-    for (const row of rows) {
-      const arr = map.get(row.company_id) || [];
-      arr.push(row);
-      map.set(row.company_id, arr);
-    }
-    return map;
-  }
-
   const incomeMap = groupByCompanyYear<IncomeRow>(incomeRes.data);
   const balanceMap = groupByCompanyYear<BalanceRow>(balanceRes.data);
   const cashFlowMap = groupByCompanyYear<CashFlowRow>(cashFlowRes.data);
@@ -96,14 +71,6 @@ async function getCompanyYearlyData(): Promise<{
   const cashFlowByCompany = groupByCompany<CashFlowRow>(cashFlowRes.data);
 
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
-
-  function safeGrowth(
-    current: number | null,
-    previous: number | null
-  ): number | null {
-    if (current === null || previous === null || previous === 0) return null;
-    return (current - previous) / Math.abs(previous);
-  }
 
   const companies: CompanyYearlyData[] = companiesRes.data.map((company) => {
     const years: Record<number, Record<RatioKey, number | null>> = {};
@@ -181,7 +148,7 @@ async function getCompanyYearlyData(): Promise<{
   });
 
   return { companies, availableYears: sortedYears };
-}
+}, ["company-yearly-data"], { revalidate: 3600 });
 
 async function CompanyDetailsContent() {
   const { companies, availableYears } = await getCompanyYearlyData();
