@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import type { RatioKey, Company } from "@/lib/types";
 import { RATIO_META, DEFAULT_RATIOS } from "@/lib/types";
@@ -10,6 +10,7 @@ const MAX_COMPANIES = 4;
 
 export default function RankingTable({ companies }: { companies: Company[] }) {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("Ranking");
   const [selectedRatios, setSelectedRatios] =
     useState<RatioKey[]>(DEFAULT_RATIOS);
@@ -225,7 +226,7 @@ export default function RankingTable({ companies }: { companies: Company[] }) {
                                 : "text-red-500"
                           }
                         >
-                          {meta.format(val)}
+                          {meta.format(val, locale)}
                         </span>
                       ) : (
                         <span className="text-zinc-300 dark:text-zinc-600">

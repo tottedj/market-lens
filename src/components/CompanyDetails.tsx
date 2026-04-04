@@ -35,7 +35,9 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>(() => {
     const param =
       searchParams.get("companies") ||
-      localStorage.getItem("selectedCompanies") ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("selectedCompanies")
+        : null) ||
       "";
     if (!param) return [];
     const tickers = param.split(",").map((t) => t.trim().toLowerCase());
@@ -419,8 +421,8 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     tickLine={false}
                     tickFormatter={(v: number) =>
                       isPercentRatio(ratioKey)
-                        ? (v * 100).toFixed(0) + "%"
-                        : v.toFixed(2)
+                        ? new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(v)
+                        : new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
                     }
                   />
                   <Tooltip
@@ -444,7 +446,7 @@ export default function CompanyDetails({ companies, availableYears }: Props) {
                     formatter={(value) => {
                       if (value == null || typeof value !== "number")
                         return ["N/A", ""];
-                      return [RATIO_META[ratioKey].format(value), ""];
+                      return [RATIO_META[ratioKey].format(value, locale), ""];
                     }}
                   />
                   <Legend
