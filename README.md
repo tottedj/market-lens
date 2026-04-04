@@ -1,10 +1,6 @@
 # MarketLens
 
-Track, compare, and rank companies with real financial data.
-
-## Disclaimer
-
-This application is for **educational and demonstration purposes only**. Financial data is sourced from [Yahoo Finance](https://finance.yahoo.com/) via the [yfinance](https://github.com/ranaroussi/yfinance) Python library and may be inaccurate, delayed, or incomplete. Nothing on this site constitutes financial advice. Do not make investment decisions based on this data.
+A full-stack financial analytics dashboard for tracking, comparing, and ranking public companies using real financial data. Built with Next.js, Supabase, and a custom Python data pipeline that sources data from Yahoo Finance and the SEC.
 
 ## Live Demo
 
@@ -14,5 +10,12 @@ This application is for **educational and demonstration purposes only**. Financi
 
 - [Next.js](https://nextjs.org) — React framework
 - [Supabase](https://supabase.com) — Database
-- [yfinance](https://github.com/ranaroussi/yfinance) — Financial data source
 - [Vercel](https://vercel.com) — Hosting
+
+## Related
+
+- **Data pipeline**: [market-lens-data](https://github.com/tottedj/market-lens-data) — Python pipeline that fetches financial data from Yahoo Finance and the SEC into Supabase
+
+## Disclaimer
+
+This project uses data from Yahoo Finance and the SEC for **educational and personal learning purposes only**. It is not intended for commercial use, redistribution, or financial advice. All data belongs to its respective owners. Use of Yahoo Finance data is subject to their [Terms of Service](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html).
